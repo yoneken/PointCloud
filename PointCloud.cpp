@@ -28,8 +28,8 @@
 
 /* ASCII code for the escape key. */
 #define KEY_ESCAPE 27
-#define DEFAULT_WIDTH 640
-#define DEFAULT_HEIGHT 480
+#define DEFAULT_WIDTH 1280
+#define DEFAULT_HEIGHT 960
 
 int window;									// The number of our GLUT window
 int time,timeprev=0;						// For calculating elapsed time
@@ -67,6 +67,33 @@ int mx=-1,my=-1; // Prevous mouse coordinates
 int rotangles[2] = {0}; // Panning angles
 float zoom = 1; // zoom factor
 short base[3] = {0};
+
+void glDrawArrowd(double x0, double y0, double z0,
+ double x1, double y1, double z1)
+{
+	GLUquadricObj *arrows[2];
+	double x2, y2, z2, len, ang;
+
+	x2 = x1-x0; y2 = y1-y0; z2 = z1-z0;
+	len = sqrt(x2*x2 + y2*y2 + z2*z2);
+	if(len != 0.0){
+		ang = acos(z2*len/(sqrt(x2*x2+y2*y2+z2*z2)*len))/3.1415926*180.0;
+
+		glPushMatrix();
+			glTranslated( x0, y0, z0);
+			glRotated( ang, -y2*len, x2*len, 0.0);
+			arrows[0] = gluNewQuadric();
+			gluQuadricDrawStyle(arrows[0], GLU_FILL);
+			gluCylinder(arrows[0], len/80, len/80, len*0.9, 8, 8);
+			glPushMatrix();
+				glTranslated( 0.0, 0.0, len*0.9);
+				arrows[1] = gluNewQuadric();
+				gluQuadricDrawStyle(arrows[1], GLU_FILL);
+				gluCylinder(arrows[1], len/30, 0.0f, len/10, 8, 8);
+			glPopMatrix();
+		glPopMatrix();
+	}
+}
 
 void makeCloudMap(void)
 {
@@ -254,9 +281,9 @@ void storeNuiDepth(void)
 
 		unsigned short *p = (unsigned short *)pBuffer;
 		for(int i=0;i<pTexture->BufferLen()/2;i++){
-			*p = (unsigned short)((*p & 0xff00)>>8) | ((*p & 0x00ff)<<8);
+			//*p = (unsigned short)((*p & 0xff00)>>8) | ((*p & 0x00ff)<<8);	// for test
 			//*p = (unsigned short)((*p & 0xfff8)>>3);
-			//*p = (unsigned short)(NuiDepthPixelToDepth(*pBuffer));
+			*p = (unsigned short)(NuiDepthPixelToDepth(*pBuffer));
 			p++;
 		}
 		glBindTexture(GL_TEXTURE_2D, bg_texture[DEPTH_TEXTURE]);
@@ -398,6 +425,54 @@ void drawNuiSkeleton(int playerID)
 	glColor3ub(0, 0, 0);
 }
 
+void drawNuiSkeleton3d(int playerID)
+{
+	glColor3ub(255, 255, 0);
+	glLineWidth(6);
+	glPushMatrix();
+	glBegin(GL_LINE_STRIP);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_HIP_CENTER].z, -skels[playerID][NUI_SKELETON_POSITION_HIP_CENTER].x, skels[playerID][NUI_SKELETON_POSITION_HIP_CENTER].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_SPINE].z, -skels[playerID][NUI_SKELETON_POSITION_SPINE].x, skels[playerID][NUI_SKELETON_POSITION_SPINE].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_SHOULDER_CENTER].z, -skels[playerID][NUI_SKELETON_POSITION_SHOULDER_CENTER].x, skels[playerID][NUI_SKELETON_POSITION_SHOULDER_CENTER].y);
+		//glVertex3f(skels[playerID][NUI_SKELETON_POSITION_HEAD].z, -skels[playerID][NUI_SKELETON_POSITION_HEAD].x, skels[playerID][NUI_SKELETON_POSITION_HEAD].y);
+	glEnd();
+	glBegin(GL_LINE_STRIP);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_SHOULDER_CENTER].z, -skels[playerID][NUI_SKELETON_POSITION_SHOULDER_CENTER].x, skels[playerID][NUI_SKELETON_POSITION_SHOULDER_CENTER].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_SHOULDER_LEFT].z, -skels[playerID][NUI_SKELETON_POSITION_SHOULDER_LEFT].x, skels[playerID][NUI_SKELETON_POSITION_SHOULDER_LEFT].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_ELBOW_LEFT].z, -skels[playerID][NUI_SKELETON_POSITION_ELBOW_LEFT].x, skels[playerID][NUI_SKELETON_POSITION_ELBOW_LEFT].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_WRIST_LEFT].z, -skels[playerID][NUI_SKELETON_POSITION_WRIST_LEFT].x, skels[playerID][NUI_SKELETON_POSITION_WRIST_LEFT].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_HAND_LEFT].z, -skels[playerID][NUI_SKELETON_POSITION_HAND_LEFT].x, skels[playerID][NUI_SKELETON_POSITION_HAND_LEFT].y);
+	glEnd();
+	glBegin(GL_LINE_STRIP);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_SHOULDER_CENTER].z, -skels[playerID][NUI_SKELETON_POSITION_SHOULDER_CENTER].x, skels[playerID][NUI_SKELETON_POSITION_SHOULDER_CENTER].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_SHOULDER_RIGHT].z, -skels[playerID][NUI_SKELETON_POSITION_SHOULDER_RIGHT].x, skels[playerID][NUI_SKELETON_POSITION_SHOULDER_RIGHT].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_ELBOW_RIGHT].z, -skels[playerID][NUI_SKELETON_POSITION_ELBOW_RIGHT].x, skels[playerID][NUI_SKELETON_POSITION_ELBOW_RIGHT].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_WRIST_RIGHT].z, -skels[playerID][NUI_SKELETON_POSITION_WRIST_RIGHT].x, skels[playerID][NUI_SKELETON_POSITION_WRIST_RIGHT].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_HAND_RIGHT].z, -skels[playerID][NUI_SKELETON_POSITION_HAND_RIGHT].x, skels[playerID][NUI_SKELETON_POSITION_HAND_RIGHT].y);
+	glEnd();
+	glBegin(GL_LINE_STRIP);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_HIP_CENTER].z, -skels[playerID][NUI_SKELETON_POSITION_HIP_CENTER].x, skels[playerID][NUI_SKELETON_POSITION_HIP_CENTER].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_HIP_LEFT].z, -skels[playerID][NUI_SKELETON_POSITION_HIP_LEFT].x, skels[playerID][NUI_SKELETON_POSITION_HIP_LEFT].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_KNEE_LEFT].z, -skels[playerID][NUI_SKELETON_POSITION_KNEE_LEFT].x, skels[playerID][NUI_SKELETON_POSITION_KNEE_LEFT].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_ANKLE_LEFT].z, -skels[playerID][NUI_SKELETON_POSITION_ANKLE_LEFT].x, skels[playerID][NUI_SKELETON_POSITION_ANKLE_LEFT].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_FOOT_LEFT].z, -skels[playerID][NUI_SKELETON_POSITION_FOOT_LEFT].x, skels[playerID][NUI_SKELETON_POSITION_FOOT_LEFT].y);
+	glEnd();
+	glBegin(GL_LINE_STRIP);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_HIP_CENTER].z, -skels[playerID][NUI_SKELETON_POSITION_HIP_CENTER].x, skels[playerID][NUI_SKELETON_POSITION_HIP_CENTER].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_HIP_RIGHT].z, -skels[playerID][NUI_SKELETON_POSITION_HIP_RIGHT].x, skels[playerID][NUI_SKELETON_POSITION_HIP_RIGHT].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_KNEE_RIGHT].z, -skels[playerID][NUI_SKELETON_POSITION_KNEE_RIGHT].x, skels[playerID][NUI_SKELETON_POSITION_KNEE_RIGHT].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_ANKLE_RIGHT].z, -skels[playerID][NUI_SKELETON_POSITION_ANKLE_RIGHT].x, skels[playerID][NUI_SKELETON_POSITION_ANKLE_RIGHT].y);
+		glVertex3f(skels[playerID][NUI_SKELETON_POSITION_FOOT_RIGHT].z, -skels[playerID][NUI_SKELETON_POSITION_FOOT_RIGHT].x, skels[playerID][NUI_SKELETON_POSITION_FOOT_RIGHT].y);
+	glEnd();
+
+	glDrawArrowd(
+		skels[playerID][NUI_SKELETON_POSITION_HEAD].z, -skels[playerID][NUI_SKELETON_POSITION_HEAD].x, 
+		skels[playerID][NUI_SKELETON_POSITION_HEAD].y, skels[playerID][NUI_SKELETON_POSITION_SHOULDER_CENTER].z,
+		-skels[playerID][NUI_SKELETON_POSITION_SHOULDER_CENTER].x, skels[playerID][NUI_SKELETON_POSITION_SHOULDER_CENTER].y);
+	glColor3ub(0, 0, 0);
+	glPopMatrix();
+}
+
 /*
  * @brief A general OpenGL initialization function.  Sets all of the initial parameters.
  */
@@ -410,8 +485,6 @@ void initGL(int Width, int Height)
 	glShadeModel(GL_SMOOTH);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	//glViewport(0, 0, Width, Height);
-	//gluOrtho2D(0.0, Width, 0.0, Height);
 	gluPerspective(45.0f,(GLfloat)Width/(GLfloat)Height,0.1f,1000.0f);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -468,7 +541,6 @@ void reSizeGL(int Width, int Height)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45.0f,(GLfloat)Width/(GLfloat)Height,0.1f,1000.0f);
-	//gluOrtho2D(0.0, Width, 0.0, Height);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
@@ -602,6 +674,21 @@ void drawGL()
 		glDisable(GL_TEXTURE_2D);
 	glPopMatrix();
 	
+	glPushMatrix();
+		glScalef(zoom,zoom,1);
+		glRotatef(rotangles[0], 1,0,0);
+		glRotatef(rotangles[1], 0,1,0);
+
+		glMatrixMode(GL_TEXTURE);
+		glLoadIdentity();
+		glScalef(1.0f/win_width,1.0f/win_height,1);
+		glMatrixMode(GL_MODELVIEW);
+		gluLookAt(  base[0]/1000.0, base[1]/1000.0, base[2]/1000.0,
+					base[0]/1000.0+0.001, base[1]/1000.0, base[2]/1000.0,
+					0, 0, 1);
+		drawNuiSkeleton3d(trackedDataIndex);
+	glPopMatrix();
+
 	//drawTexture(DEPTH_TEXTURE);
 	//drawTexture(IMAGE_TEXTURE);
 	//drawNuiSkeleton(trackedDataIndex);
@@ -614,7 +701,7 @@ void idleGL()
 {
 	storeNuiDepth();
 	storeNuiImage();
-	//storeNuiSkeleton();
+	storeNuiSkeleton();
 	makeCloudMap();
 
 #if defined(USE_FACETRACKER)
